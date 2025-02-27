@@ -4,20 +4,24 @@
     "description": "Backend API for ServicePro application",
     "main": "app.js",
     "scripts": {
-      "start": "node app.js",
-      "dev": "nodemon app.js"
+        "start": "node app.js",
+        "dev": "nodemon app.js"
     },
     "dependencies": {
-      "bcryptjs": "^2.4.3",
-      "body-parser": "^1.19.0",
-      "express": "^4.17.1",
-      "jsonwebtoken": "^8.5.1",
-      "mongoose": "^6.0.0",
-      "nodemailer": "^6.4.18",
-      "pdfkit": "^0.12.1"
+        "bcryptjs": "^2.4.3",
+        "body-parser": "^1.19.0",
+        "dotenv": "^16.4.7",
+        "express": "^4.21.2",
+        "geolib": "^3.3.4",
+        "jsonwebtoken": "^9.0.2",
+        "mongoose": "^6.0.0",
+        "nodemailer": "^6.4.18",
+        "pdfkit": "^0.12.1",
+        "pg": "^8.13.3",
+        "pg-hstore": "^2.3.4",
+        "sequelize": "^6.37.5"
     },
     "devDependencies": {
-      "nodemon": "^2.0.12"
+        "nodemon": "^2.0.12"
     }
-  }
-  
+}
