@@ -1,28 +1,26 @@
-// models/location.js
-const { DataTypes } = require('sequelize');
-const sequelize = require('../config/database');
+const mongoose = require('mongoose');
 
-const Location = sequelize.define('Location', {
+const locationSchema = new mongoose.Schema({
   name: {
-    type: DataTypes.STRING,
-    allowNull: false,
+    type: String,
+    required: true,
   },
   address: {
-    type: DataTypes.STRING,
-    allowNull: false,
+    type: String,
+    required: true,
   },
   latitude: {
-    type: DataTypes.FLOAT,
-    allowNull: false,
+    type: Number,
+    required: true,
   },
   longitude: {
-    type: DataTypes.FLOAT,
-    allowNull: false,
+    type: Number,
+    required: true,
   },
   status: {
-    type: DataTypes.STRING,
-    defaultValue: 'Pending',
+    type: String,
+    default: 'Pending',
   },
 });
 
-module.exports = Location;
+module.exports = mongoose.model('Location', locationSchema);

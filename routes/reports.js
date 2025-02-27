@@ -1,9 +1,11 @@
 const express = require('express');
 const router = express.Router();
 const qaReportController = require('../controllers/qaReportController');
-const authMiddleware = require('../middleware/auth');
+const { authenticate, restrictTo } = require('../middleware/auth');
 
-router.post('/', authMiddleware, qaReportController.createReport);
-router.get('/:id/pdf', authMiddleware, qaReportController.generatePDFReport);
+// Only authenticated managers can create reports
+router.post('/', authenticate, restrictTo('manager'), qaReportController.createReport);
+// Authenticated users can generate PDF reports
+router.get('/:id/pdf', authenticate, qaReportController.generatePDFReport);
 
 module.exports = router;

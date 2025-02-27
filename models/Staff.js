@@ -1,32 +1,31 @@
-const { DataTypes } = require('sequelize');
-const sequelize = require('../config/database');
-const Location = require('./location');
+const mongoose = require('mongoose');
 
-const Staff = sequelize.define('Staff', {
+const staffSchema = new mongoose.Schema({
   first_name: {
-    type: DataTypes.STRING,
-    allowNull: false,
+    type: String,
+    required: true,
   },
   last_name: {
-    type: DataTypes.STRING,
-    allowNull: false,
+    type: String,
+    required: true,
   },
   email: {
-    type: DataTypes.STRING,
-    allowNull: false,
+    type: String,
+    required: true,
     unique: true,
   },
   position: {
-    type: DataTypes.STRING,
-    allowNull: false,
+    type: String,
+    required: true,
   },
   clocked_in: {
-    type: DataTypes.BOOLEAN,
-    defaultValue: false,
+    type: Boolean,
+    default: false,
+  },
+  location: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Location', // References Mongoose Location model
   },
 });
 
-// Define the relationship between Staff and Location (a staff member belongs to a location)
-Staff.belongsTo(Location); 
-
-module.exports = Staff;
+module.exports = mongoose.model('Staff', staffSchema);

@@ -5,12 +5,12 @@ const cors = require('cors');
 const connectDB = require('./config/db');
 
 const authRoutes = require('./routes/auth');
-const locationRoutes = require('./routes/locations');
+//const locationRoutes = require('./routes/locations');
 const clockRoutes = require('./routes/clock');
 const reportRoutes = require('./routes/reports');
 const supplyRoutes = require('./routes/supplies');
 const proposalRoutes = require('./routes/proposals');
-const staffRoutes = require('./routes/staff');
+//const staffRoutes = require('./routes/staff');
 
 dotenv.config();
 // Initialize Express app
@@ -27,12 +27,12 @@ connectDB();
 
 // Register API routes
 app.use('/api/auth', authRoutes);
-app.use('/api/locations', locationRoutes);
-app.use('/api/clock', clockRoutes);
+//app.use('/api/locations', locationRoutes);
+//app.use('/api/clock', clockRoutes);
 app.use('/api/reports', reportRoutes);
 app.use('/api/supplies', supplyRoutes);
-app.use('/api/proposals', proposalRoutes);
-app.use('/api/staff', staffRoutes);
+//app.use('/api/proposals', proposalRoutes);
+//app.use('/api/staff', staffRoutes);
 
 // Default route to check if server is up
 app.get('/', (req, res) => {
