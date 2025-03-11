@@ -12,17 +12,17 @@ const userSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
-  firstName: { // Replace fullName with firstName
+  firstName: {
     type: String,
     required: true,
   },
-  lastName: { // Add lastName
+  lastName: {
     type: String,
     required: true,
   },
-  phoneNumber: { // Add phoneNumber
+  phoneNumber: {
     type: String,
-    required: false, // Optional; change to true if mandatory
+    required: false,
   },
   role: {
     type: String,
@@ -35,6 +35,7 @@ const userSchema = new mongoose.Schema({
   resetPasswordExpires: {
     type: Date,
   },
+  refreshTokens: [{ type: String }], // Add this to store refresh tokens
 });
 
 userSchema.pre('save', async function (next) {
