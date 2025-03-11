@@ -14,6 +14,7 @@ const proposalRoutes = require('./routes/proposals');
 const rateLimit = require('express-rate-limit');
 
 dotenv.config();
+
 // Initialize Express app
 const app = express();
 
@@ -59,3 +60,5 @@ const forgotPasswordLimiter = rateLimit({
 });
 
 app.use('/api/auth/forgot-password', forgotPasswordLimiter);
+
+

@@ -3,10 +3,18 @@ const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const nodemailer = require('nodemailer');
 
-const transporter = nodemailer.createTransport({
-  service: 'gmail',
-  auth: { user: process.env.EMAIL_USER, pass: process.env.EMAIL_PASS },
-});
+// Move transporter creation to a function to ensure env vars are loaded
+const createTransporter = () => {
+  return nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+      user: process.env.EMAIL_USER,
+      pass: process.env.EMAIL_PASS,
+    },
+    debug: true,
+    logger: true,
+  });
+};
 
 const generateTokens = async (user) => {
   const accessToken = jwt.sign(
@@ -71,12 +79,16 @@ exports.forgotPassword = async (req, res) => {
 
     const resetToken = crypto.randomBytes(20).toString('hex');
     user.resetPasswordToken = resetToken;
-    user.resetPasswordExpires = Date.now() + 3600000; // 1 hour
+    user.resetPasswordExpires = Date.now() + 3600000;
     await user.save();
 
-    const resetUrl = `http://localhost:5001/api/auth/reset-password/${resetToken}`;
-    console.log('Reset Token:', resetToken); // testing
-    await transporter.sendMail({
+    const resetUrl = `http://localhost:5001/api/auth/reset-password/${resetToken}`; //post request to reset password, token is passed in the url
+    console.log('Reset Token:', resetToken);
+    console.log('Email User:', process.env.EMAIL_USER);
+    console.log('Email Pass:', process.env.EMAIL_PASS);
+
+    const transporter = createTransporter(); // Create transporter here
+    const info = await transporter.sendMail({
       to: email,
       subject: 'Password Reset Request',
       html: `
@@ -84,19 +96,17 @@ exports.forgotPassword = async (req, res) => {
         <p>Click <a href="${resetUrl}">here</a> to reset your password.</p>
         <p>This link expires in 1 hour. If you didn’t request this, ignore this email.</p>
       `,
-    }, (error, info) => {
-      if (error) {
-        console.error('Email error:', error);
-      } else {
-        console.log('Email sent:', info.response);
-      }
     });
+    console.log('Email sent:', info.response);
 
     res.json({ message: 'Reset link sent to email' });
   } catch (error) {
-    res.status(500).json({ message: 'Server error', error: error.message });
+    console.error('Error in forgotPassword:', error);
+    res.status(500).json({ message: 'Failed to send reset link', error: error.message });
   }
 };
+
+// ... rest of the file (resetPassword, getProfile, refreshToken) ...
 
 exports.resetPassword = async (req, res) => {
   const { token } = req.params;
