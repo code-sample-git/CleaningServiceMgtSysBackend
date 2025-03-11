@@ -3,24 +3,18 @@ const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const nodemailer = require('nodemailer');
 
-// Nodemailer configuration
 const transporter = nodemailer.createTransport({
-  service: 'gmail', // Adjust to your email provider
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS,
-  },
+  service: 'gmail',
+  auth: { user: process.env.EMAIL_USER, pass: process.env.EMAIL_PASS },
 });
 
 exports.register = async (req, res) => {
-  const { email, password, fullName, role } = req.body;
+  const { email, password, firstName, lastName, phoneNumber, role } = req.body;
   try {
     const userExists = await User.findOne({ email });
-    if (userExists) {
-      return res.status(400).json({ message: 'User already exists' });
-    }
+    if (userExists) return res.status(400).json({ message: 'User already exists' });
 
-    const user = new User({ email, password, fullName, role });
+    const user = new User({ email, password, firstName, lastName, phoneNumber, role });
     await user.save();
 
     const token = jwt.sign(
@@ -31,7 +25,7 @@ exports.register = async (req, res) => {
 
     res.status(201).json({
       token,
-      user: { id: user._id, email: user.email, role: user.role },
+      user: { id: user._id, email: user.email, firstName: user.firstName, lastName: user.lastName, role: user.role },
     });
   } catch (error) {
     res.status(500).json({ message: 'Server error', error: error.message });
@@ -54,7 +48,7 @@ exports.login = async (req, res) => {
 
     res.json({
       token,
-      user: { id: user._id, email: user.email, role: user.role },
+      user: { id: user._id, email: user.email, firstName: user.firstName, lastName: user.lastName, role: user.role },
     });
   } catch (error) {
     res.status(500).json({ message: 'Server error', error: error.message });
@@ -65,16 +59,14 @@ exports.forgotPassword = async (req, res) => {
   const { email } = req.body;
   try {
     const user = await User.findOne({ email });
-    if (!user) {
-      return res.status(404).json({ message: 'User not found' });
-    }
+    if (!user) return res.status(404).json({ message: 'User not found' });
 
     const resetToken = crypto.randomBytes(20).toString('hex');
     user.resetPasswordToken = resetToken;
-    user.resetPasswordExpires = Date.now() + 3600000; // 1 hour
+    user.resetPasswordExpires = Date.now() + 3600000;
     await user.save();
 
-    const resetUrl = `http://localhost:5000/api/auth/reset-password/${resetToken}`;
+    const resetUrl = `http://localhost:5001/api/auth/reset-password/${resetToken}`;
     await transporter.sendMail({
       to: email,
       subject: 'Password Reset Request',
@@ -95,9 +87,7 @@ exports.resetPassword = async (req, res) => {
       resetPasswordToken: token,
       resetPasswordExpires: { $gt: Date.now() },
     });
-    if (!user) {
-      return res.status(400).json({ message: 'Invalid or expired token' });
-    }
+    if (!user) return res.status(400).json({ message: 'Invalid or expired token' });
 
     user.password = newPassword;
     user.resetPasswordToken = undefined;
@@ -113,13 +103,13 @@ exports.resetPassword = async (req, res) => {
 exports.getProfile = async (req, res) => {
   try {
     const user = await User.findById(req.user.id).select('-password');
-    if (!user) {
-      return res.status(404).json({ message: 'User not found' });
-    }
+    if (!user) return res.status(404).json({ message: 'User not found' });
     res.json({
       id: user._id,
       email: user.email,
-      fullName: user.fullName,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      phoneNumber: user.phoneNumber,
       role: user.role,
     });
   } catch (error) {
