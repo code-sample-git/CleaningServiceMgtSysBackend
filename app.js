@@ -11,6 +11,7 @@ const reportRoutes = require('./routes/reports');
 const supplyRoutes = require('./routes/supplies');
 const proposalRoutes = require('./routes/proposals');
 //const staffRoutes = require('./routes/staff');
+const rateLimit = require('express-rate-limit');
 
 dotenv.config();
 // Initialize Express app
@@ -50,3 +51,11 @@ const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
+
+const forgotPasswordLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 5, // 5 requests per IP
+  message: 'Too many password reset requests, please try again later.',
+});
+
+app.use('/api/auth/forgot-password', forgotPasswordLimiter);

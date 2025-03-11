@@ -8,19 +8,18 @@ const transporter = nodemailer.createTransport({
   auth: { user: process.env.EMAIL_USER, pass: process.env.EMAIL_PASS },
 });
 
-// Helper function to generate tokens
 const generateTokens = async (user) => {
   const accessToken = jwt.sign(
     { id: user._id, role: user.role },
     process.env.JWT_SECRET,
-    { expiresIn: '15m' } // Short-lived access token
+    { expiresIn: '15m' }
   );
   const refreshToken = jwt.sign(
     { id: user._id },
     process.env.REFRESH_SECRET,
-    { expiresIn: '7d' } // Long-lived refresh token
+    { expiresIn: '7d' }
   );
-  user.refreshTokens.push(refreshToken); // Store refresh token
+  user.refreshTokens.push(refreshToken);
   await user.save();
   return { accessToken, refreshToken };
 };
@@ -72,14 +71,25 @@ exports.forgotPassword = async (req, res) => {
 
     const resetToken = crypto.randomBytes(20).toString('hex');
     user.resetPasswordToken = resetToken;
-    user.resetPasswordExpires = Date.now() + 3600000;
+    user.resetPasswordExpires = Date.now() + 3600000; // 1 hour
     await user.save();
 
     const resetUrl = `http://localhost:5001/api/auth/reset-password/${resetToken}`;
+    console.log('Reset Token:', resetToken); // testing
     await transporter.sendMail({
       to: email,
       subject: 'Password Reset Request',
-      text: `Reset your password here: ${resetUrl}`,
+      html: `
+        <p>You requested a password reset for your ServicePro account.</p>
+        <p>Click <a href="${resetUrl}">here</a> to reset your password.</p>
+        <p>This link expires in 1 hour. If you didn’t request this, ignore this email.</p>
+      `,
+    }, (error, info) => {
+      if (error) {
+        console.error('Email error:', error);
+      } else {
+        console.log('Email sent:', info.response);
+      }
     });
 
     res.json({ message: 'Reset link sent to email' });
@@ -141,3 +151,4 @@ exports.refreshToken = async (req, res) => {
     res.status(401).json({ message: 'Invalid or expired refresh token' });
   }
 };
+
