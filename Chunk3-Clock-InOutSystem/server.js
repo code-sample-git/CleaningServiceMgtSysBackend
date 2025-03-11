@@ -1,97 +1,139 @@
-const express = require('express');
-const jwt = require('jsonwebtoken');
-const bcrypt = require('bcrypt');
+const express = require("express");
+const fs = require("fs");
+const jwt = require("jsonwebtoken");
+const bodyParser = require("body-parser");
+const cors = require("cors");
+
 const app = express();
-const PORT = process.env.PORT || 3000; // Allows dynamic port selection
+const PORT = 3000;
+const SECRET_KEY = "supersecret"; // Change this in production
 
-app.use(express.json());
+app.use(cors());
+app.use(bodyParser.json());
 
-const users = [];
-const clockIns = [];
-const tasks = [
-    { id: 1, name: 'Clean Room 101', assignedTo: 'staff1', status: 'locked' },
-    { id: 2, name: 'Clean Room 102', assignedTo: 'staff2', status: 'locked' }
-];
+// Utility functions to load and save data
+const loadData = (filename) => {
+    try {
+        return JSON.parse(fs.readFileSync(`./data/${filename}`, "utf-8"));
+    } catch (error) {
+        console.error(`Error loading ${filename}:`, error);
+        return [];
+    }
+};
 
-// User registration endpoint
-app.post('/register', async (req, res) => {
+const saveData = (filename, data) => {
+    try {
+        fs.writeFileSync(`./data/${filename}`, JSON.stringify(data, null, 2));
+    } catch (error) {
+        console.error(`Error saving ${filename}:`, error);
+    }
+};
+
+// Load initial data
+let users = loadData("users.json");
+let tasks = loadData("tasks.json");
+let supplies = loadData("supplies.json");
+
+// Middleware: Authenticate Requests
+const authenticate = (req, res, next) => {
+    const token = req.headers.authorization;
+    if (!token) return res.status(403).json({ error: "No token provided" });
+
+    jwt.verify(token, SECRET_KEY, (err, decoded) => {
+        if (err) return res.status(401).json({ error: "Invalid token" });
+        req.user = decoded;
+        next();
+    });
+};
+
+// Register a new user (staff or manager)
+app.post("/register", (req, res) => {
     const { username, password, role } = req.body;
-    const hashedPassword = await bcrypt.hash(password, 10);
-    users.push({ username, password: hashedPassword, role });
-    res.status(201).send('User registered');
+    if (!username || !password || !role) return res.status(400).json({ error: "Missing fields" });
+
+    const newUser = { id: users.length + 1, username, password, role };
+    users.push(newUser);
+    saveData("users.json", users);
+    
+    res.status(201).json({ message: "User registered", user: newUser });
 });
 
-// User login endpoint
-app.post('/login', async (req, res) => {
+// Login and get a JWT token
+app.post("/login", (req, res) => {
     const { username, password } = req.body;
-    const user = users.find(u => u.username === username);
-    if (user && await bcrypt.compare(password, user.password)) {
-        const token = jwt.sign({ username: user.username, role: user.role }, 'secret_key', { expiresIn: '1h' });
-        res.json({ token });
-    } else {
-        res.status(401).send('Invalid credentials');
-    }
+    const user = users.find((u) => u.username === username && u.password === password);
+    if (!user) return res.status(401).json({ error: "Invalid credentials" });
+
+    const token = jwt.sign({ id: user.id, username: user.username, role: user.role }, SECRET_KEY, { expiresIn: "1h" });
+    res.json({ token });
 });
 
-// Middleware to authenticate JWT
-const authenticateJWT = (req, res, next) => {
-    const token = req.header('Authorization');
-    if (token) {
-        jwt.verify(token, 'secret_key', (err, user) => {
-            if (err) {
-                return res.sendStatus(403);
-            }
-            req.user = user;
-            next();
-        });
-    } else {
-        res.sendStatus(401);
-    }
-};
-
-// Middleware to validate GPS data
-const validateGPS = (req, res, next) => {
+// Staff Clock-In (GPS-based)
+app.post("/clock-in", authenticate, (req, res) => {
     const { latitude, longitude } = req.body;
-    next();
-};
+    if (!latitude || !longitude) return res.status(400).json({ error: "GPS data required" });
 
-// Clock-in endpoint
-app.post('/clock-in', authenticateJWT, validateGPS, (req, res) => {
-    const { latitude, longitude } = req.body;
-    const timestamp = new Date();
-    clockIns.push({ userId: req.user.username, latitude, longitude, timestamp });
-
+    const timestamp = new Date().toISOString();
+    
     tasks.forEach(task => {
-        if (task.assignedTo === req.user.username) {
-            task.status = 'unlocked';
-            sendPushNotification(req.user.username, `Task ${task.name} is now unlocked`);
-        }
+        if (task.assignedTo === req.user.username) task.status = "unlocked";
     });
 
-    res.send('Clocked in and tasks unlocked');
+    saveData("tasks.json", tasks);
+    res.json({ message: "Clocked in and tasks unlocked", timestamp });
 });
 
-// Clock-out endpoint
-app.post('/clock-out', authenticateJWT, validateGPS, (req, res) => {
+// Staff Clock-Out (GPS-based)
+app.post("/clock-out", authenticate, (req, res) => {
     const { latitude, longitude } = req.body;
-    const timestamp = new Date();
-    clockIns.push({ userId: req.user.username, latitude, longitude, timestamp, clockOut: true });
-    res.send('Clocked out');
+    if (!latitude || !longitude) return res.status(400).json({ error: "GPS data required" });
+
+    const timestamp = new Date().toISOString();
+    res.json({ message: "Clocked out", timestamp });
 });
 
-// Function to send push notifications (pseudo-code)
-const sendPushNotification = (user, message) => {
-    console.log(`Push notification to ${user}: ${message}`);
-};
+// Task Notifications (View Tasks)
+app.get("/tasks", authenticate, (req, res) => {
+    const staffTasks = tasks.filter(task => task.assignedTo === req.user.username);
+    res.json(staffTasks);
+});
+
+// Request Supplies (Staff → Manager Approval)
+app.post("/supply-request", authenticate, (req, res) => {
+    const { item, quantity } = req.body;
+    if (!item || !quantity) return res.status(400).json({ error: "Missing fields" });
+
+    const request = {
+        id: supplies.requests.length + 1,
+        item,
+        quantity,
+        requestedBy: req.user.username,
+        status: "pending",
+    };
+
+    supplies.requests.push(request);
+    saveData("supplies.json", supplies);
+    res.json({ message: "Supply request submitted", request });
+});
+
+// Approve Supply Request (Manager Only)
+app.post("/approve-request/:id", authenticate, (req, res) => {
+    if (req.user.role !== "manager") return res.status(403).json({ error: "Unauthorized" });
+
+    const requestId = parseInt(req.params.id);
+    const request = supplies.requests.find(r => r.id === requestId);
+    if (!request) return res.status(404).json({ error: "Request not found" });
+
+    request.status = "approved";
+    saveData("supplies.json", supplies);
+    res.json({ message: "Supply request approved", request });
+});
+
+// Inventory Tracking (Low-Stock Alerts)
+app.get("/inventory", (req, res) => {
+    const lowStock = supplies.inventory.filter(item => item.quantity < item.threshold);
+    res.json({ lowStock });
+});
 
 // Start the server
-app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
-}).on('error', (err) => {
-    if (err.code === 'EADDRINUSE') {
-        console.error(`Port ${PORT} is already in use. Please use a different port.`);
-        process.exit(1);
-    } else {
-        console.error(err);
-    }
-});
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
