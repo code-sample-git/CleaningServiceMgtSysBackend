@@ -1,5 +1,5 @@
-const express = require('express');
 const dotenv = require('dotenv');
+const express = require('express');
 const { Sequelize } = require('sequelize');
 const cors = require('cors');  
 const bodyParser = require('body-parser');
