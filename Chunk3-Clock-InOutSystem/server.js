@@ -3,8 +3,12 @@ const fs = require("fs");
 const jwt = require("jsonwebtoken");
 const bodyParser = require("body-parser");
 const cors = require("cors");
+const http = require("http");
+const socketIo = require("socket.io");
 
 const app = express();
+const server = http.createServer(app);
+const io = socketIo(server);
 const PORT = 3000;
 const SECRET_KEY = "supersecret"; // Change this in production
 
@@ -80,6 +84,7 @@ app.post("/clock-in", authenticate, (req, res) => {
     });
 
     saveData("tasks.json", tasks);
+    io.emit('taskNotification', 'New task available');
     res.json({ message: "Clocked in and tasks unlocked", timestamp });
 });
 
@@ -136,4 +141,4 @@ app.get("/inventory", (req, res) => {
 });
 
 // Start the server
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+server.listen(PORT, () => console.log(`Server running on port ${PORT}`));
