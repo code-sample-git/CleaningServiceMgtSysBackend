@@ -79,15 +79,15 @@ exports.forgotPassword = async (req, res) => {
 
     const resetToken = crypto.randomBytes(20).toString('hex');
     user.resetPasswordToken = resetToken;
-    user.resetPasswordExpires = Date.now() + 3600000;
+    user.resetPasswordExpires = Date.now() + 3600000; // 1 hour
     await user.save();
 
-    const resetUrl = `http://localhost:5001/api/auth/reset-password/${resetToken}`; //post request to reset password, token is passed in the url
+    const resetUrl = `http://localhost:3000/reset-password/${resetToken}`; // Updated to frontend URL
     console.log('Reset Token:', resetToken);
     console.log('Email User:', process.env.EMAIL_USER);
     console.log('Email Pass:', process.env.EMAIL_PASS);
 
-    const transporter = createTransporter(); // Create transporter here
+    const transporter = createTransporter();
     const info = await transporter.sendMail({
       to: email,
       subject: 'Password Reset Request',
@@ -105,8 +105,6 @@ exports.forgotPassword = async (req, res) => {
     res.status(500).json({ message: 'Failed to send reset link', error: error.message });
   }
 };
-
-// ... rest of the file (resetPassword, getProfile, refreshToken) ...
 
 exports.resetPassword = async (req, res) => {
   const { token } = req.params;
