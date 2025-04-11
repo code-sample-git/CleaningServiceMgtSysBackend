@@ -32,7 +32,6 @@ app.use('/api/clock', clockRoutes);
 app.use('/api/reports', reportRoutes);
 app.use('/api/supplies', supplyRoutes);
 app.use('/api/proposals', proposalRoutes);
-app.use('/api/staff', staffRoutes);
 
 
 app.get('/', (req, res) => {
