@@ -3,7 +3,7 @@ const express = require('express');
 const { Sequelize } = require('sequelize');
 const cors = require('cors');  
 const bodyParser = require('body-parser');
-const Location = require('./models/location'); 
+const Location = require('./models/Location'); 
 dotenv.config();
 
 // Initialize Express app
