@@ -1,7 +1,7 @@
 const express = require('express');
-const Location = require('../models/location'); 
+const Location = require('../models/Location');
+const Staff = require('../models/staff');
 const geolib = require('geolib');
-
 const router = express.Router();
 
 // Create a new location
@@ -24,7 +24,7 @@ router.post('/', async (req, res) => {
 // Get all locations
 router.get('/', async (req, res) => {
     try {
-        const locations = await Location.findAll();
+        const locations = await Location.find();
         res.status(200).json(locations);
     } catch (error) {
         res.status(500).json({ message: 'Error fetching locations', error });
@@ -35,7 +35,7 @@ router.get('/', async (req, res) => {
 router.get('/:id', async (req, res) => {
     const { id } = req.params;
     try {
-        const location = await Location.findByPk(id);
+        const location = await Location.findById(id);
         if (location) {
             res.status(200).json(location);
         } else {
@@ -51,14 +51,15 @@ router.put('/:id', async (req, res) => {
     const { id } = req.params;
     const { name, address, latitude, longitude, status } = req.body;
     try {
-        const location = await Location.update(
+        const location = await Location.findByIdAndUpdate(
+            id,
             { name, address, latitude, longitude, status },
-            { where: { id } }
+            { new: true }
         );
-        if (location[0] === 0) {
-            return res.status(404).json({ message: 'Location not found or no changes made' });
+        if (!location) {
+            return res.status(404).json({ message: 'Location not found' });
         }
-        res.status(200).json({ message: 'Location updated successfully' });
+        res.status(200).json({ message: 'Location updated successfully', location });
     } catch (error) {
         res.status(500).json({ message: 'Error updating location', error });
     }
@@ -68,11 +69,11 @@ router.put('/:id', async (req, res) => {
 router.delete('/:id', async (req, res) => {
     const { id } = req.params;
     try {
-        const location = await Location.destroy({ where: { id } });
-        if (location === 0) {
+        const location = await Location.findByIdAndDelete(id);
+        if (!location) {
             return res.status(404).json({ message: 'Location not found' });
         }
-        res.status(204).json({ message: 'Location deleted' });
+        res.status(200).json({ message: 'Location deleted successfully' });
     } catch (error) {
         res.status(500).json({ message: 'Error deleting location', error });
     }
@@ -81,25 +82,22 @@ router.delete('/:id', async (req, res) => {
 // Validate staff clock-in using GPS coordinates
 router.post('/validate', async (req, res) => {
     const { latitude, longitude, locationId } = req.body;
-    
-    // Validate if necessary fields are present
+
     if (!latitude || !longitude || !locationId) {
         return res.status(400).json({ message: 'Missing required data (latitude, longitude, locationId)' });
     }
 
     try {
-        const location = await Location.findByPk(locationId);
+        const location = await Location.findById(locationId);
         if (!location) {
             return res.status(404).json({ message: `Location with id ${locationId} not found` });
         }
 
-        // Calculate distance between staff's position and location's coordinates
         const distance = geolib.getDistance(
             { latitude, longitude },
             { latitude: location.latitude, longitude: location.longitude }
         );
 
-        // If within 100 meters, allow clock-in
         if (distance <= 100) {
             res.status(200).json({ message: 'Clock-in successful' });
         } else {
@@ -110,5 +108,40 @@ router.post('/validate', async (req, res) => {
     }
 });
 
+// Assign staff to a location
+router.put('/:locationId/assign-staff/:staffId', async (req, res) => {
+    const { locationId, staffId } = req.params;
+
+    try {
+        const location = await Location.findById(locationId);
+        if (!location) {
+            return res.status(404).json({ message: 'Location not found' });
+        }
+
+        const staff = await Staff.findById(staffId);
+        if (!staff) {
+            return res.status(404).json({ message: 'Staff not found' });
+        }
+
+        staff.location = locationId;
+        await staff.save();
+
+        res.status(200).json({ message: 'Staff assigned to location', staff });
+    } catch (error) {
+        res.status(500).json({ message: 'Error assigning staff', error });
+    }
+});
+
+// Get all staff assigned to a location
+router.get('/:locationId/staff', async (req, res) => {
+    const { locationId } = req.params;
+
+    try {
+        const staffList = await Staff.find({ location: locationId });
+        res.status(200).json(staffList);
+    } catch (error) {
+        res.status(500).json({ message: 'Error retrieving staff', error });
+    }
+});
 
 module.exports = router;

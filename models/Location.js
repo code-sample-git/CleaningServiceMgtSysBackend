@@ -17,10 +17,14 @@ const locationSchema = new mongoose.Schema({
     type: Number,
     required: true,
   },
-  status: {
-    type: String,
-    default: 'Pending',
-  },
+  assignedStaff: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Staff', 
+    }
+  ]
+}, {
+  timestamps: true,
 });
 
 module.exports = mongoose.model('Location', locationSchema);
