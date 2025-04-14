@@ -10,7 +10,7 @@ const ProposalSchema = new mongoose.Schema({
   ],
   frequency: { type: String, enum: ['weekly', 'bi-weekly', 'monthly'], default: 'weekly' },
   notes: { type: String },
-  totalAmount: { type: Number, required: true },
+  totalAmount: { type: Number, required: false },
   status: { type: String, enum: ['pending', 'approved', 'rejected'], default: 'pending' },
   createdDate: { type: Date, default: Date.now }
 }, {

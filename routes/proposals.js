@@ -9,5 +9,6 @@ router.get('/:id', authenticate, proposalController.getProposalById);
 router.put('/:id', authenticate, restrictTo('manager', 'admin'), proposalController.updateProposal);
 router.patch('/:id/status', authenticate, restrictTo('manager', 'admin'), proposalController.updateProposalStatus);
 router.delete('/:id', authenticate, restrictTo('manager', 'admin'), proposalController.deleteProposal);
+router.post('/:id/email', authenticate, restrictTo('manager', 'admin'), proposalController.sendProposalEmail);
 
 module.exports = router;
