@@ -13,6 +13,13 @@ const ProposalSchema = new mongoose.Schema({
   totalAmount: { type: Number, required: true },
   status: { type: String, enum: ['pending', 'approved', 'rejected'], default: 'pending' },
   createdDate: { type: Date, default: Date.now }
+}, {
+  toJSON: { virtuals: true },
+  toObject: { virtuals: true }
+});
+
+ProposalSchema.virtual('id').get(function () {
+  return this._id.toHexString();
 });
 
 module.exports = mongoose.model('Proposal', ProposalSchema);

@@ -4,6 +4,7 @@ const Staff = require('../models/staff');
 const geolib = require('geolib');
 const router = express.Router();
 const { getLocationsByClientId, getLocationById } = require('../controllers/locationController');
+const { authenticate, restrictTo } = require('../middleware/auth');
 
 router.get('/client/:clientId', authenticate, getLocationsByClientId);
 router.get('/:id', authenticate, getLocationById);

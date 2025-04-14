@@ -36,6 +36,9 @@ const userSchema = new mongoose.Schema({
     type: Date,
   },
   refreshTokens: [{ type: String }], // Add this to store refresh tokens
+}, {
+  toJSON: { virtuals: true },     // expose virtuals in JSON
+  toObject: { virtuals: true }
 });
 
 userSchema.pre('save', async function (next) {
@@ -48,5 +51,9 @@ userSchema.pre('save', async function (next) {
 userSchema.methods.comparePassword = async function (candidatePassword) {
   return await bcrypt.compare(candidatePassword, this.password);
 };
+
+userSchema.virtual('id').get(function () {
+  return this._id.toHexString();
+});
 
 module.exports = mongoose.model('User', userSchema);

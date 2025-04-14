@@ -19,6 +19,6 @@ router.post('/reset-password/:token', resetPassword);
 router.get('/profile', authenticate, restrictTo('admin', 'manager', 'staff', 'client'), getProfile);
 router.post('/refresh-token', refreshToken); // Add this line
 router.get('/:id', authenticate, getClientById);
-router.get('/', authenticate, restrictTo('admin', 'manager'), getAllUsers);
+router.get('/', authenticate, getAllUsers);
 
 module.exports = router;
