@@ -160,3 +160,23 @@ exports.refreshToken = async (req, res) => {
   }
 };
 
+exports.getClientById = async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id);
+    if (!user || user.role !== 'client') {
+      return res.status(404).json({ message: 'Client not found' });
+    }
+    res.json(user);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+exports.getAllUsers = async (req, res) => {
+  try {
+    const users = await User.find().select('-password'); // exclude password
+    res.json(users);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};

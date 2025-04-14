@@ -12,6 +12,7 @@ const reportRoutes = require('./routes/reports');
 const supplyRoutes = require('./routes/supplies');
 const proposalRoutes = require('./routes/proposals');
 const serviceRoutes = require('./routes/service');
+const taskRoutes = require('./routes/tasks');
 
 const rateLimit = require('express-rate-limit');
 
@@ -32,9 +33,9 @@ app.use('/api/staff', staffRoutes);
 //app.use('/api/clock', clockRoutes);
 app.use('/api/reports', reportRoutes);
 app.use('/api/supplies', supplyRoutes);
-//app.use('/api/proposals', proposalRoutes);
+app.use('/api/proposals', proposalRoutes);
 app.use('/api/service', serviceRoutes);
-
+app.use('/api/tasks', taskRoutes);
 
 app.get('/', (req, res) => {
   res.send('Service Pro Backend is Running');

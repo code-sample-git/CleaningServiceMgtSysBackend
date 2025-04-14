@@ -3,10 +3,6 @@ const Location = require('../models/Location');
 const Staff = require('../models/staff');
 const geolib = require('geolib');
 const router = express.Router();
-const { getLocationsByClientId, getLocationById } = require('../controllers/locationController');
-
-router.get('/client/:clientId', authenticate, getLocationsByClientId);
-router.get('/:id', authenticate, getLocationById);
 
 // Create a new location
 router.post('/', async (req, res) => {
@@ -36,7 +32,6 @@ router.get('/', async (req, res) => {
 });
 
 // Get location by ID
-/*
 router.get('/:id', async (req, res) => {
     const { id } = req.params;
     try {
@@ -50,7 +45,7 @@ router.get('/:id', async (req, res) => {
         res.status(500).json({ message: 'Error fetching location', error });
     }
 });
-*/
+
 // Update location
 router.put('/:id', async (req, res) => {
     const { id } = req.params;
