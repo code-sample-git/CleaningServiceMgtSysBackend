@@ -1,6 +1,8 @@
+// models/Location.js
+
 const mongoose = require('mongoose');
 
-const locationSchema = new mongoose.Schema({
+const LocationSchema = new mongoose.Schema({
   name: {
     type: String,
     required: true,
@@ -9,22 +11,25 @@ const locationSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
-  latitude: {
-    type: Number,
-    required: true,
+  status: {
+    type: String,
+    enum: ['active', 'inactive'],
+    default: 'active',
   },
-  longitude: {
-    type: Number,
-    required: true,
+  clientId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: true
   },
-  assignedStaff: [
-    {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'Staff', 
-    }
-  ]
+  
 }, {
   timestamps: true,
+  toJSON: { virtuals: true },
+  toObject: { virtuals: true },
 });
 
-module.exports = mongoose.model('Location', locationSchema);
+LocationSchema.virtual('id').get(function () {
+  return this._id.toHexString();
+});
+
+module.exports = mongoose.model('Location', LocationSchema);

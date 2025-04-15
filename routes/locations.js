@@ -3,48 +3,23 @@ const Location = require('../models/Location');
 const Staff = require('../models/staff');
 const geolib = require('geolib');
 const router = express.Router();
+const locationController = require('../controllers/locationController')
+const { authenticate } = require('../middleware/auth');
 
 // Create a new location
-router.post('/', async (req, res) => {
-    const { name, address, latitude, longitude, status } = req.body;
-    try {
-        const location = await Location.create({
-            name,
-            address,
-            latitude,
-            longitude,
-            status: status || 'Pending',
-        });
-        res.status(201).json(location);
-    } catch (error) {
-        res.status(500).json({ message: 'Error creating location', error });
-    }
-});
+router.post('/', authenticate, locationController.createLocation);
 
 // Get all locations
-router.get('/', async (req, res) => {
-    try {
-        const locations = await Location.find();
-        res.status(200).json(locations);
-    } catch (error) {
-        res.status(500).json({ message: 'Error fetching locations', error });
-    }
-});
+router.get('/', authenticate, locationController.getAllLocations);
 
 // Get location by ID
-router.get('/:id', async (req, res) => {
-    const { id } = req.params;
-    try {
-        const location = await Location.findById(id);
-        if (location) {
-            res.status(200).json(location);
-        } else {
-            res.status(404).json({ message: 'Location not found' });
-        }
-    } catch (error) {
-        res.status(500).json({ message: 'Error fetching location', error });
-    }
-});
+router.get('/:id', authenticate, locationController.getLocationById);
+
+// Get location by Client ID
+router.get('/client/:clientId', authenticate, locationController.getLocationsByClientId);
+
+// Delete location
+router.delete('/:id', authenticate, locationController.getLocationById);
 
 // Update location
 router.put('/:id', async (req, res) => {
@@ -62,20 +37,6 @@ router.put('/:id', async (req, res) => {
         res.status(200).json({ message: 'Location updated successfully', location });
     } catch (error) {
         res.status(500).json({ message: 'Error updating location', error });
-    }
-});
-
-// Delete location
-router.delete('/:id', async (req, res) => {
-    const { id } = req.params;
-    try {
-        const location = await Location.findByIdAndDelete(id);
-        if (!location) {
-            return res.status(404).json({ message: 'Location not found' });
-        }
-        res.status(200).json({ message: 'Location deleted successfully' });
-    } catch (error) {
-        res.status(500).json({ message: 'Error deleting location', error });
     }
 });
 

@@ -5,7 +5,7 @@ const cors = require('cors');
 const connectDB = require('./config/db');
 
 const authRoutes = require('./routes/auth');
-const locationRoutes = require('./routes/locationRoutes'); 
+const locationRoutes = require('./routes/locations'); 
 const staffRoutes = require('./routes/staffRoutes'); 
 const clockRoutes = require('./routes/clock');
 const reportRoutes = require('./routes/reports');
